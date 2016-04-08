@@ -1,2 +1,2 @@
 # django-sqltemplate
-Database query tool for Django based on SQL templates
+Database query tool for Django, based on SQL templates
