@@ -17,7 +17,7 @@ Install package:
 
 ```pip install django-sqltemplate```
 
-Make `sqltemplates` directory in your Django app:
+Make `sqltemplates` directory in your Django app (your app must be added to `INSTALLED_APPS`):
 
 ```mkdir <django-project>/<my-app>/sqltemplates```
 
