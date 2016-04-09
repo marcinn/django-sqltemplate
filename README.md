@@ -22,7 +22,7 @@ Make `sqltemplates` directory in your Django app:
 
 ```mkdir <django-project>/<my-app>/sqltemplates```
 
-Put `hello.sql` template in `sqltemplates``` directory:
+Put `hello.sql` template in `sqltemplates` directory:
 
 hello.sql (assuming sqlite syntax)
 ```
