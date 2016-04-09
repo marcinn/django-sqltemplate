@@ -215,7 +215,8 @@ Simple?
 
 * `django-sqltemplate` is designed for managing queries of mid/large complexity (like queries above 100 SLOCs, incl. window functions, non-generic syntax, etc)
 * Maintenance of a complex queries is way faster using raw SQL instead of ORM objects (`Q()`,`F()`,`.aggregate()`, etc)
-* It is not a replacement for Django ORM nor SQLAlchemy, and may be used together (i.e.`sqlalchemy.text(str(countries(search_for='a')))`)
+* The querying should be simplest as possible, incl. joining / embedding templates (we don't want to handle cursors and connections instances manually)
+* It is not a replacement for Django ORM nor SQLAlchemy, and may be used together with (i.e.`sqlalchemy.text(str(countries(search_for='a')))`)
 * There are many good template engines (Django Templates, Jinja2), so we just need to use them and not reinvent the wheel
 * Django 1.8+ has support for multiple templating engines
 * Django is a most popoular RAD framework for Python, but with limited ORM
