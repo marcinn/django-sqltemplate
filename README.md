@@ -188,7 +188,7 @@ Instantiate `count` and `countries` templates:
 >>> countries = sqltemplate.get('countries.sql')
 ```
 
-And query for countries containg letter "a" in their names:
+Ask for countries containg letter "a" in their names:
 
 ```python
 >>> print countries(search_for='a').values()
