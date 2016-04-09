@@ -5,9 +5,8 @@ Database query tool for Django, based on SQL templates
 
 SQL is a great and poweruful DSL, which is easeier in maintenance 
 when you're working on complext queries (i.e. reporting queries).
-
-But the main problem with raw SQL is a "spaghetti" anti-pattern, 
-when you're embedding/building SQLs in directly in your code.
+But the main problem of raw SQL is a commonly used "spaghetti" anti-pattern, 
+when you're embedding/building SQLs directly in your code.
 
 The solution comes from templating SQLs idea and `django-sqltemplate` 
 is a simple implementation of it.
