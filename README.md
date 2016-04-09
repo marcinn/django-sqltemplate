@@ -155,4 +155,72 @@ the `counter.sql` template, which is resolved and rendered by `{{ sql|safe }}` e
 and then (at the execution time) the `name` variable is passed to `cursor.execute()`
 (which is safe and the preferred way of passing query parameters). 
 
+Remeber that preparing templates with additional context, makes a new instance (a copy)
+of the original object. This will allow you for easy query customization dependend of
+your requirements.
+
+### Countries counter
+
+Let's prepare a test table (still assuming sqlite as a db engine):
+
+```bash
+echo "create table countries (id int, name varchar(64));" | sqlite3 db.sqlite3
+```
+
+Fill the example data:
+
+```sql
+echo "insert into countries (id, name) values (1, 'Poland'), (2, 'Slovakia'), (3, 'Czech Republic');" | sqlite3 db.sqlite3
+```
+
+Add `countries.sql` query template:
+
+```sql
+select id, name from countries
+{% if search_for %}where name like '%'||:search_for||'%'{% endif %}
+{% if limit %}limit :limit{% endif %} 
+```
+
+Instantiate `count` and `countries` templates:
+
+```python
+>>> count = sqltemplate.get('counter.sql')
+>>> countries = sqltemplate.get('countries.sql')
+```
+
+And query for countries containg letter "a" in their names:
+
+```python
+>>> print countries(search_for='a').values()
+[{'id': 1, 'name': u'Poland'}, {'id': 2, 'name': u'Slovakia'}]
+```
+
+then count the results:
+
+```python
+>>> print count(sql=countries(search_for='a')).scalar()
+2
+```
+
+and limit results if you want:
+
+```python
+>>> print countries(search_for='a', limit=1).values()
+[{'id': 1, 'name': u'Poland'}]
+```
+
+Simple?
+
+## Requirements
+
+* Django 1.8+
+
+Dependencies:
+
+* sqlparse
+* flatdict
+
+## License
+
+BSD
 
