@@ -159,7 +159,7 @@ Remeber that preparing templates with additional context, makes a new instance (
 of the original object. This will allow you for easy query customization dependend of
 your requirements.
 
-### Countries counter
+### Countries searcher
 
 Let's prepare a test table (still assuming sqlite as a db engine):
 
