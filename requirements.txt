@@ -1,0 +1,5 @@
+Django==1.8
+flatdict==1.2.0
+sqlparse==0.1.19
+ipython
+ipdb
