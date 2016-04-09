@@ -24,50 +24,50 @@ Make `sqltemplates` directory in your Django app (your app must be added to `INS
 Put `hello.sql` template in `sqltemplates` directory:
 
 hello.sql (assuming sqlite syntax)
-```
+```sql
 select 'Hello ' || :name as message;
 ```
 
 Execute the query:
 
-```
-[1]: import sqltemplate
-[2]: hello = sqltemplate.get('hello.sql')
-[3]: print hello(name='Marcin').values()
+```python
+>>> import sqltemplate
+>>> hello = sqltemplate.get('hello.sql')
+>>> print hello(name='Marcin').values()
 [{'message': u'Hello Marcin'}]
 ```
 
 If query returns just one row (as in example above) you may read result directly using `.scalar()` method:
 
-```
-[4]: print hello(name='Marcin').scalar()
+```python
+>>> print hello(name='Marcin').scalar()
 Hello Marcin
 ```
 
 To fetch results as a list of dictionaries use `.values()` method:
 
-```
-[5]: print hello(name='Marcin').values()
+```python
+>>> print hello(name='Marcin').values()
 [{'message': u'Hello Marcin'}]
 ```
 
 To fetch results as a list of tuples use `.values_list()` method:
 
-```
-[6]: print hello(name='Marcin').values_list()
+```python
+>>> print hello(name='Marcin').values_list()
 [(u'Hello Marcin',)]
 ```
 
 To fetch results as iterator over tuples use `.iterator()` method:
 
-```
-[7]: print hello(name='Marcin').iterator()
+```python
+>>> print hello(name='Marcin').iterator()
 <generator object _fetch at 0x7f8abd202870>
 ```
 
 To fetch results as iterator over dictionaries use `.dictiterator()` method:
 
-```
-[8]: print hello(name='Marcin').dictiterator()
+```python
+>>> print hello(name='Marcin').dictiterator()
 <generator object _fetch at 0x7f8abd202820>
 ```
