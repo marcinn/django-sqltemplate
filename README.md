@@ -151,7 +151,7 @@ or on demand by using `.prepare()` or simple calling the instance:
 ```
 
 So in the Counter example we're setting `hello` instance as a `sql` variable for 
-the `counter.sql` template, which is resolved and rendered by `{{ sql|safe }}`` expression,
+the `counter.sql` template, which is resolved and rendered by `{{ sql|safe }}` expression,
 and then (at the execution time) the `name` variable is passed to `cursor.execute()`
 (which is safe and the preferred way of passing query parameters). 
 
