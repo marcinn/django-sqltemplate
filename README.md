@@ -27,7 +27,7 @@ Put `hello.sql` template in `sqltemplates` directory:
 
 hello.sql (assuming sqlite syntax)
 ```sql
-select 'Hello ' || :name as message;
+select 'Hello ' || :name as message
 ```
 
 ### Query the database
@@ -73,3 +73,86 @@ To fetch results as iterator over dictionaries use `.dictiterator()` method:
 >>> print hello(name='Marcin').dictiterator()
 <generator object _fetch at 0x7f8abd202820>
 ```
+
+
+## Advanced examples
+
+### The Counter
+
+Let's assume that we want to count rows returning from `hello.sql` query.
+To do that we should create a sql for the counter  (name it `counter.sql`
+and place in the same directory as `hello.sql`):
+
+```sql
+select count(*) from ({{ sql|safe }}) x
+```
+
+Then join the queries together:
+
+```python
+>>> import sqltemplate
+>>> hello = sqltemplate.get('hello.sql')
+>>> count = sqltemplate.get('counter.sql')
+>>> print count(sql=hello(name='Marcin')).scalar()
+1
+```
+
+As you can see the `:name` variable was replaced with `Marcin` string,
+and the `sql` template variable (from The Counter query) was replaced
+by `hello.sql` subquery.
+
+#### How it looks?
+
+```python
+>>> print count(sql=hello(name='Marcin'))
+```
+```sql
+SELECT count(*)
+FROM
+  (SELECT 'Hello ' || :name AS message) x
+```
+
+#### How it works?
+
+`count` and `hello` objects are `SQLTeamplate` instances:
+
+```python
+>>> count, hello
+(<sqltemplate.query.SQLTemplate at 0x7f8abd1ee610>,
+ <sqltemplate.query.SQLTemplate at 0x7f8abd1ee210>)
+```
+
+The `SQLTemplate` wraps Django `Template` instance together with specified context.
+Calling `SQLTemplate` produces new instance with extended context (internally using `.prepare()` method),
+and the outermost context is extended by context of embedded templates.
+
+Context may be set at the factory time:
+
+```python
+>>> hello = sqltemplate.get('hello.sql', name='Marcin')
+>>> print hello.context
+{'name': 'Marcin'}
+```
+
+or on demand by using `.prepare()` or simple calling the instance:
+
+```python
+>>> hello = sqltemplate.get('hello.sql')
+>>> print hello.context
+{}
+
+>>> hello_marcin = hello.prepare(name='Marcin')
+>>> print hello_marcin.context
+{'name': 'Marcin'}
+
+>>> hello_marcin = hello(name='Marcin')
+>>> print hello_marcin.context
+{'name': 'Marcin'}
+```
+
+So in the Counter example we're setting `hello` instance as a `sql` variable for 
+the `counter.sql` template, which is resolved and rendered by `{{ sql|safe }}`` expression,
+and then (at the execution time) the `name` variable is passed to `cursor.execute()`
+(which is safe and the preferred way of passing query parameters). 
+
+
