@@ -13,9 +13,11 @@ is a simple implementation of it.
 
 ## Quickstart
 
-Install package:
+### Install the package
 
 ```pip install django-sqltemplate```
+
+### Add SQL template(s)
 
 Make `sqltemplates` directory in your Django app (your app must be added to `INSTALLED_APPS`):
 
@@ -28,7 +30,7 @@ hello.sql (assuming sqlite syntax)
 select 'Hello ' || :name as message;
 ```
 
-Execute the query:
+### Query the database
 
 ```python
 >>> import sqltemplate
