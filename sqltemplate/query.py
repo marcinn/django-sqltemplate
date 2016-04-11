@@ -47,6 +47,9 @@ class SQLTemplate(object):
     def __unicode__(self):
         return unicode(self.sql())
 
+    def rawtuple(self):
+        return self.sql().rawtuple()
+
 
 class SQLResult(object):
     def __init__(self, cursor):
@@ -179,6 +182,9 @@ class SQLQuery(object):
             raise MultipleObjectsReturned('Query returned more than one row')
 
         return row[0]
+
+    def rawtuple(self):
+        return self.sql, self.context
 
     def __unicode__(self):
         return prettify(self.sql)
