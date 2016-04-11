@@ -11,3 +11,11 @@ def get(template_name, **context):
     from .query import SQLTemplate
 
     return SQLTemplate(get_template(template_name), context=context)
+
+
+def from_string(string, **context):
+    from .query import SQLTemplate
+    default_engine = engines.all()[0]
+    return SQLTemplate(default_engine.from_string(string), context=context)
+
+
