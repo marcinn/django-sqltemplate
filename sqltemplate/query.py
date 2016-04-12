@@ -1,54 +1,24 @@
 from django.db import connections, connection
-from django.utils.encoding import force_str
+from django.utils.encoding import force_str, force_unicode
 from .exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from .utils import prettify
 import flatdict
 
 
-class SQLTemplate(object):
-    def __init__(self, template, context=None):
-        self._template = template
-        self._context = context or {}
 
-    @property
-    def context(self):
-        return self._context
+class DictCursorWrapper(object):
+    def __init__(self, cursor):
+        self._cursor = cursor
 
-    def sql(self, using=None):
-        return SQLQuery(self._template.render(self._context),
-                context=self._context, using=using)
+    def __getattr__(self, attr):
+        return getattr(self._cursor, attr)
 
-    def prepare(self, **extra):
-        context = dict(self._context)
-        context.update(extra)
-        return type(self)(self._template, context=context)
-
-    def __call__(self, **kw):
-        return self.prepare(**kw)
-
-    def values(self, using=None):
-        return self.sql(using=using).values()
-
-    def values_list(self, using=None):
-        return self.sql(using=using).values_list()
-
-    def iterator(self, using=None):
-        return self.sql(using=using).iterator()
-
-    def dictiterator(self, using=None):
-        return self.sql(using=using).dictiterator()
-
-    def scalar(self, using=None):
-        return self.sql(using=using).scalar()
-
-    def __str__(self):
-        return str(self.sql())
-
-    def __unicode__(self):
-        return unicode(self.sql())
-
-    def rawtuple(self):
-        return self.sql().rawtuple()
+    def dictfetchall(self):
+        columns = [col[0] for col in self._cursor.description]
+        return [
+            dict(zip(columns, row))
+            for row in self._cursor.fetchall()
+            ]
 
 
 class SQLResult(object):
@@ -113,20 +83,30 @@ class ValuesIterator(SQLResult):
             yield dict(zip(self._columns, row))
 
 
-
-class SQLQuery(object):
-    def __init__(self, sql, context=None, using=None):
-        self._sql = sql
+class TemplateQuery(object):
+    def __init__(self, template, context=None, using=None):
+        self._template = template
         self._context = context or {}
         self._using = using
+        self._sql = None
 
     @property
-    def sql(self):
+    def sql(self, using=None):
+        if self._sql is None:
+            self._sql = self.render()
         return self._sql
+
+    def render(self):
+        return self._template.render(self._context)
 
     @property
     def context(self):
         return self._context
+
+    def bind(self, **context):
+        ctx = dict(self._context)
+        ctx.update(context)
+        return self._clone(context=ctx)
 
     def using(self, using):
         return self._clone(using=using)
@@ -140,9 +120,13 @@ class SQLQuery(object):
         def extract_subcontexts(values):
             subcontexts = []
             for value in values:
-                if isinstance(value, (SQLTemplate, SQLQuery)):
-                    subcontexts.append(value.context)
-                    subcontexts+= extract_subcontexts(value.context.values())
+                try:
+                    subctx = value.context
+                except AttributeError:
+                    pass
+                else:
+                    subcontexts.append(subctx)
+                    subcontexts+= extract_subcontexts(subctx.values())
             return subcontexts
 
         ctx = {}
@@ -158,20 +142,25 @@ class SQLQuery(object):
 
         return result_class(cur)
 
-    def values(self, using=None):
-        return self.execute(using=using, result_class=ValuesResult)
+    def values(self, **extra):
+        obj = self.bind(**extra) if extra else self
+        return obj.execute(result_class=ValuesResult)
 
-    def values_list(self, using=None):
-        return self.execute(using=using, result_class=ValuesListResult)
+    def values_list(self, **extra):
+        obj = self.bind(**extra) if extra else self
+        return obj.execute(result_class=ValuesListResult)
 
-    def iterator(self, using=None):
-        return self.execute(using=using, result_class=ValuesListIterator)
+    def iterator(self, **extra):
+        obj = self.bind(**extra) if extra else self
+        return obj.execute(result_class=ValuesListIterator)
 
-    def dictiterator(self, using=None):
-        return self.execute(using=using, result_class=ValuesIterator)
+    def dictiterator(self, **extra):
+        obj = self.bind(**extra) if extra else self
+        return obj.execute(result_class=ValuesIterator)
 
-    def scalar(self, using=None):
-        result = self.values_list()
+    def scalar(self, **extra):
+        obj = self.bind(**extra) if extra else self
+        result = obj.values_list(**extra)
 
         try:
             row = result[0]
@@ -186,25 +175,19 @@ class SQLQuery(object):
     def rawtuple(self):
         return self.sql, self.context
 
-    def __unicode__(self):
+    def pretty(self):
         return prettify(self.sql)
+
+    def _clone(self, **kwargs):
+        template = kwargs.pop('template', self._template)
+        context = kwargs.pop('context', self._context)
+        using = kwargs.pop('using', self._using)
+
+        return type(self)(
+            template=template, context=context, using=using, **kwargs)
+
+    def __unicode__(self):
+        return force_unicode(self.sql)
 
     def __str__(self):
         return force_str(unicode(self))
-
-
-class DictCursorWrapper(object):
-    def __init__(self, cursor):
-        self._cursor = cursor
-
-    def __getattr__(self, attr):
-        return getattr(self._cursor, attr)
-
-    def dictfetchall(self):
-        columns = [col[0] for col in self._cursor.description]
-        return [
-            dict(zip(columns, row))
-            for row in self._cursor.fetchall()
-            ]
-
-

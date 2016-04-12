@@ -19,7 +19,8 @@ is a simple implementation of it.
 
 ### Add SQL template(s)
 
-Make `sqltemplates` directory in your Django app (your app must be added to `INSTALLED_APPS`):
+Make `sqltemplates` directory in your Django app (your app must be added to
+`INSTALLED_APPS`):
 
 ```mkdir <django-project>/<my-app>/sqltemplates```
 
@@ -35,42 +36,43 @@ select 'Hello ' || :name as message
 ```python
 >>> import sqltemplate
 >>> hello = sqltemplate.get('hello.sql')
->>> print hello(name='Marcin').values()
+>>> print hello.values(name='Marcin')
 [{'message': u'Hello Marcin'}]
 ```
 
-If query returns just one row (as in example above) you may read result directly using `.scalar()` method:
+If query returns just one row (as in example above) you may read result
+directly using `.scalar()` method:
 
 ```python
->>> print hello(name='Marcin').scalar()
+>>> print hello.scalar(name='Marcin')
 Hello Marcin
 ```
 
 To fetch results as a list of dictionaries use `.values()` method:
 
 ```python
->>> print hello(name='Marcin').values()
+>>> print hello.values(name='Marcin')
 [{'message': u'Hello Marcin'}]
 ```
 
 To fetch results as a list of tuples use `.values_list()` method:
 
 ```python
->>> print hello(name='Marcin').values_list()
+>>> print hello.values_list(name='Marcin')
 [(u'Hello Marcin',)]
 ```
 
 To fetch results as iterator over tuples use `.iterator()` method:
 
 ```python
->>> print hello(name='Marcin').iterator()
+>>> print hello.iterator(name='Marcin')
 <generator object _fetch at 0x7f8abd202870>
 ```
 
 To fetch results as iterator over dictionaries use `.dictiterator()` method:
 
 ```python
->>> print hello(name='Marcin').dictiterator()
+>>> print hello.dictiterator(name='Marcin')
 <generator object _fetch at 0x7f8abd202820>
 ```
 
@@ -80,20 +82,23 @@ To fetch results as iterator over dictionaries use `.dictiterator()` method:
 ### The Counter
 
 Let's assume that we want to count rows returning from `hello.sql` query.
-To do that we should create a sql for the counter  (name it `counter.sql`
-and place in the same directory as `hello.sql`):
+To do that we should create a sql for the counter. But instead of making
+a new file, we'll create it from string, to show how `.from_string()`
+works:
 
-```sql
-select count(*) from ({{ sql|safe }}) x
+```python
+>>> count = sqltemplate.from_string(
+    'select count(*) from ({{ sql|safe }}) x')
 ```
 
 Then join the queries together:
 
 ```python
 >>> import sqltemplate
->>> hello = sqltemplate.get('hello.sql')
->>> count = sqltemplate.get('counter.sql')
->>> print count(sql=hello(name='Marcin')).scalar()
+>>> hello = sqltemplate.get('hello.sql').bind(name='Marcin')
+>>> count = sqltemplate.from_string(
+    'select count(*) from ({{ sql|safe }}) x')
+>>> print count.scalar(sql=hello)
 1
 ```
 
@@ -104,7 +109,7 @@ by `hello.sql` subquery.
 #### How it looks?
 
 ```python
->>> print count(sql=hello(name='Marcin'))
+>>> print count.bind(sql=hello).pretty()
 ```
 ```sql
 SELECT count(*)
@@ -114,50 +119,50 @@ FROM
 
 #### How it works?
 
-`count` and `hello` objects are `SQLTeamplate` instances:
+`count` and `hello` objects are `TemplateQuery` instances:
 
 ```python
 >>> count, hello
-(<sqltemplate.query.SQLTemplate at 0x7f8abd1ee610>,
- <sqltemplate.query.SQLTemplate at 0x7f8abd1ee210>)
+(<sqltemplate.query.TemplateQuery at 0x7f8abd1ee610>,
+ <sqltemplate.query.TemplateQuery at 0x7f8abd1ee210>)
 ```
 
-The `SQLTemplate` wraps Django `Template` instance together with specified context.
-Calling `SQLTemplate` produces new instance with extended context (internally using `.prepare()` method),
-and the outermost context is extended by context of embedded templates.
+The `TemplateQuery` wraps Django `Template` instance together with specified
+context.  Calling `TemplateQuery` produces new instance with extended context
+(internally using `.bind()` method), and the outermost context is extended by
+context of embedded templates.
 
-Context may be set at the factory time:
+Context may be set at the factory time setting `context` argument or by
+implicit call of `.bind()` method. Also you can pass extra context arguments
+directly to `.values()`, `.values_list()`, `.iterator()`, `.dictiterator()` and
+`.scalar()`.
 
 ```python
->>> hello = sqltemplate.get('hello.sql', name='Marcin')
+>>> hello = sqltemplate.get('hello.sql', context={'name': 'Marcin'})
 >>> print hello.context
 {'name': 'Marcin'}
-```
 
-or on demand by using `.prepare()` or simple calling the instance:
-
-```python
 >>> hello = sqltemplate.get('hello.sql')
 >>> print hello.context
 {}
 
->>> hello_marcin = hello.prepare(name='Marcin')
+>>> hello_marcin = hello.bind(name='Marcin')
 >>> print hello_marcin.context
 {'name': 'Marcin'}
 
->>> hello_marcin = hello(name='Marcin')
->>> print hello_marcin.context
-{'name': 'Marcin'}
+>>> print hello.scalar(name='Marcin')
+Hello Marcin
 ```
 
-So in the Counter example we're setting `hello` instance as a `sql` variable for 
-the `counter.sql` template, which is resolved and rendered by `{{ sql|safe }}` expression,
-and then (at the execution time) the `name` variable is passed to `cursor.execute()`
-(which is safe and the preferred way of passing query parameters). 
+So in the Counter example we're setting `hello` instance as a `sql` variable
+for the `counter.sql` template, which is resolved and rendered by
+`{{ sql|safe }}` expression, and then (at the execution time) the `name`
+variable is passed to `cursor.execute()` (which is safe and the preferred way
+of passing query parameters). 
 
-Remeber that preparing templates with additional context, makes a new instance (a copy)
-of the original object. This will allow you for easy query customization dependend of
-your requirements.
+Remeber that preparing templates with additional context makes a new instance
+(a copy) of the original object. This will allow you for easy query
+customization dependend of your requirements.
 
 ### Countries searcher
 
@@ -191,33 +196,98 @@ Instantiate `count` and `countries` templates:
 Ask for countries containg letter "a" in their names:
 
 ```python
->>> print countries(search_for='a').values()
+>>> print countries.values(search_for='a')
 [{'id': 1, 'name': u'Poland'}, {'id': 2, 'name': u'Slovakia'}]
 ```
 
 then count the results:
 
 ```python
->>> print count(sql=countries(search_for='a')).scalar()
+>>> print count.scalar(sql=countries.bind(search_for='a'))
 2
 ```
 
 and limit results if you want:
 
 ```python
->>> print countries(search_for='a', limit=1).values()
+>>> print countries.values(search_for='a', limit=1)
 [{'id': 1, 'name': u'Poland'}]
 ```
 
 Simple?
 
+### Multiple database connections
+
+`TemplateQuery` class provides `.using()` method which allow you to
+change connection used to querying database. Just provide connection
+name (alias) same as for Django's `QuerySet`.
+
+```python
+>>> print countries.using('default').values()
+```
+
+You can set connection name at factory time:
+
+```python
+>>> countries = sqltemplate.get('countries.sql', using='default')
+```
+
+And you can use `sqltemplate.using()` as a context manager:
+
+```python
+with sqltemplate.using('default') as tpl:
+    countries = tpl.get('countries.sql')
+    print countries.values()
+```
+
+Please note that `tpl` variable is a new factory instance, which will
+automatically set proper connection to all created `TemplateQuery`
+objects. Direct call to `sqltemplate.get()` will create objects same
+as before, without connection set, because it is a shortcut for default
+factory method.
+
+### Default context
+
+Sometimes you may need to set some defaults. To do that you can set
+default context at a factory time:
+
+```python
+>>> countries = sqltemplate.get('countries.sql', context={'limit': 2})
+```
+
+And by using `sqltemplate.context()` context manager:
+
+```python
+with sqltemplate.context(limit=1) as tpl:
+    countries = tpl.get('countries.sql')
+    print countries.values()
+```
+
+### Setting default context and connection together
+
+If you want to set default context together with specific connection,
+use `sqltemplate.scope()` context manager:
+
+```python
+with sqltemplate.scope(context={'limit': 2}, using='default') as tpl:
+    countries = tpl.get('countries.sql')
+    print countries.values()
+```
+
 ## Motivation
 
-* `django-sqltemplate` is designed for managing queries of mid/large complexity (like queries above 100 SLOCs, incl. window functions, non-generic syntax, etc)
-* Maintenance of a complex queries is way faster using raw SQL instead of ORM objects (`Q()`,`F()`,`.aggregate()`, etc)
-* The querying should be simplest as possible, incl. joining / embedding templates (we don't want to handle cursors and connections instances manually)
-* It is not a replacement for Django ORM nor SQLAlchemy, and may be used together with (i.e.`sqlalchemy.text(str(countries(search_for='a')))`)
-* There are many good template engines (Django Templates, Jinja2), so we just need to use them and not reinvent the wheel
+* `django-sqltemplate` is designed for managing queries of mid/large complexity
+  (like queries above 100 SLOCs, incl. window functions, non-generic syntax,
+  etc)
+* Maintenance of a complex queries is way faster using raw SQL instead of ORM
+  objects (`Q()`,`F()`,`.aggregate()`, etc)
+* The querying should be simplest as possible, incl. joining / embedding
+  templates (we don't want to handle cursors and connections instances manually)
+* It is not a replacement for Django ORM nor SQLAlchemy, and may be used
+  together with (i.e.`sqlalchemy.text(str(countries(search_for='a')))`
+  or Django's `Manager.raw()`)
+* There are many good template engines (Django Templates, Jinja2), so we just
+  need to use them and not reinvent the wheel
 * Django 1.8+ has support for multiple templating engines
 * Django is a most popoular RAD framework for Python, but with limited ORM
 
