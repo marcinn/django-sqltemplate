@@ -24,6 +24,15 @@ class DictCursorWrapper(object):
 class SQLResult(object):
     def __init__(self, cursor):
         self._cursor = cursor
+
+    @property
+    def cursor(self):
+        return self._cursor
+
+
+class SQLValuesResult(SQLResult):
+    def __init__(self, *args, **kw):
+        super(SQLValuesResult, self).__init__(*args, **kw)
         self._result = None
         self._columns = [col[0] for col in self._cursor.description]
 
@@ -46,7 +55,7 @@ class SQLResult(object):
         return self.result[idx]
 
 
-class ValuesListResult(SQLResult):
+class ValuesListResult(SQLValuesResult):
     def _fetch(self, cursor):
         return cursor.fetchall()
 
@@ -54,7 +63,7 @@ class ValuesListResult(SQLResult):
         return len(self.result)
 
 
-class ValuesResult(SQLResult):
+class ValuesResult(SQLValuesResult):
     def _fetch(self, cursor):
         return [
             dict(zip(self._columns, row))
@@ -65,7 +74,7 @@ class ValuesResult(SQLResult):
         return len(self.result)
 
 
-class ValuesListIterator(SQLResult):
+class ValuesListIterator(SQLValuesResult):
     def _fetch(self, cursor):
         while True:
             row = cursor.fetchone()
@@ -74,7 +83,7 @@ class ValuesListIterator(SQLResult):
             yield row
 
 
-class ValuesIterator(SQLResult):
+class ValuesIterator(SQLValuesResult):
     def _fetch(self, cursor):
         while True:
             row = cursor.fetchone()
@@ -103,10 +112,13 @@ class TemplateQuery(object):
     def context(self):
         return self._context
 
-    def bind(self, **context):
+    def bind(self, context):
         ctx = dict(self._context)
         ctx.update(context)
         return self._clone(context=ctx)
+
+    def filter(self, **context):
+        return self.bind(context)
 
     def using(self, using):
         return self._clone(using=using)
@@ -116,7 +128,7 @@ class TemplateQuery(object):
         conn = connections[using] if using else connection
         return DictCursorWrapper(conn.cursor())
 
-    def execute(self, using=None, result_class=ValuesResult):
+    def execute(self, using=None, result_class=SQLResult):
         def extract_subcontexts(values):
             subcontexts = []
             for value in values:
