@@ -112,13 +112,10 @@ class TemplateQuery(object):
     def context(self):
         return self._context
 
-    def bind(self, context):
+    def bind(self, **context):
         ctx = dict(self._context)
         ctx.update(context)
         return self._clone(context=ctx)
-
-    def filter(self, **context):
-        return self.bind(context)
 
     def using(self, using):
         return self._clone(using=using)
