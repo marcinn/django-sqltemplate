@@ -1,6 +1,19 @@
 # django-sqltemplate
 Database query tool for Django, based on SQL templates
 
+## Development status
+
+* Alpha
+* API may be radically changed until first Beta release
+* Not tested automatically yet
+ 
+### Roadmap
+
+* 0.6 - stable API
+* 0.7 - automated tests, first Beta release
+* 0.8,<1.0 - minor improvements without API changes, bugfixes
+* 1.0 - first Stable release
+
 ## Introduction
 
 SQL is a great and poweruful DSL, which is easeier in maintenance 
