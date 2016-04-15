@@ -1,9 +1,14 @@
+from django.conf import settings
 from django.db import connections, connection
+from django.db.backends.utils import logger as db_logger
 from django.utils.encoding import force_str, force_unicode
+
+import flatdict
+import types
+from time import time
+
 from .exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from .utils import prettify
-import flatdict
-
 
 
 class DictCursorWrapper(object):
@@ -147,7 +152,35 @@ class TemplateQuery(object):
         query_params = flatdict.FlatDict(ctx, delimiter='.').as_dict()
 
         cur = self._cursor(using=using or self._using)
-        cur.execute(self.sql, query_params)
+
+        # Get native cursor to avoid problems with Django` DebugCursor
+        # logging. See https://code.djangoproject.com/ticket/22377
+
+        if settings.DEBUG:
+            start = time()
+
+        native_cursor = cur.cursor
+        native_cursor.execute(force_str(self.sql), query_params)
+
+        # Until Django bug #22377 is not resolved, we must manually
+        # log query and append SQL to queries_log
+
+        if settings.DEBUG:
+            stop = time()
+            duration = stop-start
+
+            sql = cur.db.ops.last_executed_query(
+                    native_cursor, self.sql, query_params)
+
+            cur.db.queries_log.append({
+                'sql': sql,
+                'time': "%.3f" % duration,
+            })
+
+            db_logger.debug(
+                '(%.3f) %s; args=%s', duration, self.sql, query_params,
+                extra={'duration': duration, 'sql': self.sql, 'params': query_params}
+            )
 
         return result_class(cur)
 
