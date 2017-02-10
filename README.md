@@ -248,7 +248,7 @@ You can set connection name at factory time:
 And you can use `djsqltemplate.using()` as a context manager:
 
 ```python
-with sqltemplate.using('default') as tpl:
+with djsqltemplate.using('default') as tpl:
     countries = tpl.get('countries.sql')
     print countries.values()
 ```
