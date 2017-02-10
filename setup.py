@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
-setup(name='django-sqltemplate',
-      version='0.4.4',
+setup(name='sqltemplate',
+      version='0.5.0-a1',
       description='Database querying tool for Django, based on SQL templates',
       classifiers=[
         "Development Status :: 3 - Alpha",
@@ -19,7 +19,7 @@ setup(name='django-sqltemplate',
       author='Marcin Nowak',
       author_email='marcin.j.nowak@gmail.com',
       url='https://github.com/marcinn/django-sqltemplate',
-      install_requires = ['flatdict>=1.2.0,<2.0.0', 'sqlparse>=0.1.19,<0.2'],
+      install_requires=['flatdict>=1.2.0,<2.0.0', 'sqlparse>=0.1.19,<0.2'],
       keywords='web python django sql template',
       packages=find_packages('.'),
       include_package_data=True,
