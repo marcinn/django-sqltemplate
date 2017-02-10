@@ -47,8 +47,8 @@ select 'Hello ' || :name as message
 ### Query the database
 
 ```python
->>> import sqltemplate
->>> hello = sqltemplate.get('hello.sql')
+>>> import djsqltemplate
+>>> hello = djsqltemplate.get('hello.sql')
 >>> print hello.values(name='Marcin')
 [{'message': u'Hello Marcin'}]
 ```
@@ -100,16 +100,16 @@ a new file, we'll create it from string, to show how `.from_string()`
 works:
 
 ```python
->>> count = sqltemplate.from_string(
+>>> count = djsqltemplate.from_string(
     'select count(*) from ({{ sql|safe }}) x')
 ```
 
 Then join the queries together:
 
 ```python
->>> import sqltemplate
->>> hello = sqltemplate.get('hello.sql').bind(name='Marcin')
->>> count = sqltemplate.from_string(
+>>> import djsqltemplate
+>>> hello = djsqltemplate.get('hello.sql').bind(name='Marcin')
+>>> count = djsqltemplate.from_string(
     'select count(*) from ({{ sql|safe }}) x')
 >>> print count.scalar(sql=hello)
 1
@@ -151,11 +151,11 @@ directly to `.values()`, `.values_list()`, `.iterator()`, `.dictiterator()` and
 `.scalar()`.
 
 ```python
->>> hello = sqltemplate.get('hello.sql', context={'name': 'Marcin'})
+>>> hello = djsqltemplate.get('hello.sql', context={'name': 'Marcin'})
 >>> print hello.context
 {'name': 'Marcin'}
 
->>> hello = sqltemplate.get('hello.sql')
+>>> hello = djsqltemplate.get('hello.sql')
 >>> print hello.context
 {}
 
@@ -202,8 +202,8 @@ select id, name from countries
 Instantiate `count` and `countries` templates:
 
 ```python
->>> count = sqltemplate.get('counter.sql')
->>> countries = sqltemplate.get('countries.sql')
+>>> count = djsqltemplate.get('counter.sql')
+>>> countries = djsqltemplate.get('countries.sql')
 ```
 
 Ask for countries containg letter "a" in their names:
@@ -242,10 +242,10 @@ name (alias) same as for Django's `QuerySet`.
 You can set connection name at factory time:
 
 ```python
->>> countries = sqltemplate.get('countries.sql', using='default')
+>>> countries = djsqltemplate.get('countries.sql', using='default')
 ```
 
-And you can use `sqltemplate.using()` as a context manager:
+And you can use `djsqltemplate.using()` as a context manager:
 
 ```python
 with sqltemplate.using('default') as tpl:
@@ -255,7 +255,7 @@ with sqltemplate.using('default') as tpl:
 
 Please note that `tpl` variable is a new factory instance, which will
 automatically set proper connection to all created `TemplateQuery`
-objects. Direct call to `sqltemplate.get()` will create objects same
+objects. Direct call to `djsqltemplate.get()` will create objects same
 as before, without connection set, because it is a shortcut for default
 factory method.
 
@@ -265,13 +265,13 @@ Sometimes you may need to set some defaults. To do that you can set
 default context at a factory time:
 
 ```python
->>> countries = sqltemplate.get('countries.sql', context={'limit': 2})
+>>> countries = djsqltemplate.get('countries.sql', context={'limit': 2})
 ```
 
-And by using `sqltemplate.context()` context manager:
+And by using `djsqltemplate.context()` context manager:
 
 ```python
-with sqltemplate.context(limit=1) as tpl:
+with djsqltemplate.context(limit=1) as tpl:
     countries = tpl.get('countries.sql')
     print countries.values()
 ```
@@ -279,10 +279,10 @@ with sqltemplate.context(limit=1) as tpl:
 ### Setting default context and connection together
 
 If you want to set default context together with specific connection,
-use `sqltemplate.scope()` context manager:
+use `djsqltemplate.scope()` context manager:
 
 ```python
-with sqltemplate.scope(context={'limit': 2}, using='default') as tpl:
+with djsqltemplate.scope(context={'limit': 2}, using='default') as tpl:
     countries = tpl.get('countries.sql')
     print countries.values()
 ```
@@ -310,8 +310,7 @@ with sqltemplate.scope(context={'limit': 2}, using='default') as tpl:
 
 Dependencies:
 
-* sqlparse
-* flatdict
+* sqltemplate >= 0.5.0
 
 ## License
 
