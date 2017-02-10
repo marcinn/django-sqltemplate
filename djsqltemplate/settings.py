@@ -10,7 +10,7 @@ TEMPLATES = getattr(settings, 'SQL_TEMPLATES', [{
     'OPTIONS': {
         'loaders': [
             'django.template.loaders.filesystem.Loader',
-            'sqltemplate.contrib.django.loaders.app_directories.Loader',
+            'djsqltemplate.loaders.app_directories.Loader',
             ]
         },
     }])
