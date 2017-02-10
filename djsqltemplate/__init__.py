@@ -7,10 +7,10 @@ from django.db import connections, connection
 from django.db.backends.utils import logger as db_logger
 from django.utils.encoding import force_str
 
+from sqltemplate.base import SQLTemplate
+
 from .loader import get_template
 from .engines import engines
-
-from ...base import SQLTemplate
 
 
 class DictCursorWrapper(object):

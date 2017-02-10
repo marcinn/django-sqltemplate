@@ -1,7 +1,7 @@
 import six
 
+from sqltemplate.exceptions import TemplateDoesNotExist
 from .engines import engines
-from ...exceptions import TemplateDoesNotExist
 
 
 def _engine_list(using=None):

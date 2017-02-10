@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-setup(name='sqltemplate',
+setup(name='django-sqltemplate',
       version='0.5.0',
       description='Database querying tool for Django, based on SQL templates',
       classifiers=[
@@ -19,7 +19,7 @@ setup(name='sqltemplate',
       author='Marcin Nowak',
       author_email='marcin.j.nowak@gmail.com',
       url='https://github.com/marcinn/django-sqltemplate',
-      install_requires=['flatdict>=1.2.0,<2.0.0', 'sqlparse>=0.1.19,<0.2'],
+      install_requires=['sqltemplate>=0.5.0,<1.0'],
       keywords='web python django sql template',
       packages=find_packages('.'),
       include_package_data=True,
