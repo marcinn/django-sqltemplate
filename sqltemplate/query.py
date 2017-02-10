@@ -1,29 +1,7 @@
-from django.conf import settings
-from django.db import connections, connection
-from django.db.backends.utils import logger as db_logger
-from django.utils.encoding import force_str, force_unicode
-
 import flatdict
-import types
-from time import time
 
 from .exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from .utils import prettify
-
-
-class DictCursorWrapper(object):
-    def __init__(self, cursor):
-        self._cursor = cursor
-
-    def __getattr__(self, attr):
-        return getattr(self._cursor, attr)
-
-    def dictfetchall(self):
-        columns = [col[0] for col in self._cursor.description]
-        return [
-            dict(zip(columns, row))
-            for row in self._cursor.fetchall()
-            ]
 
 
 class SQLResult(object):
@@ -98,7 +76,8 @@ class ValuesIterator(SQLValuesResult):
 
 
 class TemplateQuery(object):
-    def __init__(self, template, context=None, using=None):
+    def __init__(self, adapter, template, context=None, using=None):
+        self._adapter = adapter
         self._template = template
         self._context = context or {}
         self._using = using
@@ -111,7 +90,7 @@ class TemplateQuery(object):
         return self._sql
 
     def render(self):
-        return self._template.render(self._context)
+        return self._adapter.render_template(self._template, self._context)
 
     @property
     def context(self):
@@ -127,8 +106,7 @@ class TemplateQuery(object):
 
     def _cursor(self, using=None):
         using = using or self._using
-        conn = connections[using] if using else connection
-        return DictCursorWrapper(conn.cursor())
+        return self._adapter.create_cursor(using=using)
 
     def execute(self, using=None, result_class=SQLResult):
         def extract_subcontexts(values):
@@ -140,7 +118,7 @@ class TemplateQuery(object):
                     pass
                 else:
                     subcontexts.append(subctx)
-                    subcontexts+= extract_subcontexts(subctx.values())
+                    subcontexts += extract_subcontexts(subctx.values())
             return subcontexts
 
         ctx = {}
@@ -150,37 +128,9 @@ class TemplateQuery(object):
         ctx.update(self._context)
 
         query_params = flatdict.FlatDict(ctx, delimiter='.').as_dict()
-
-        cur = self._cursor(using=using or self._using)
-
-        # Get native cursor to avoid problems with Django` DebugCursor
-        # logging. See https://code.djangoproject.com/ticket/22377
-
-        if settings.DEBUG:
-            start = time()
-
-        native_cursor = cur.cursor
-        native_cursor.execute(force_str(self.sql), query_params)
-
-        # Until Django bug #22377 is not resolved, we must manually
-        # log query and append SQL to queries_log
-
-        if settings.DEBUG:
-            stop = time()
-            duration = stop-start
-
-            sql = cur.db.ops.last_executed_query(
-                    native_cursor, self.sql, query_params)
-
-            cur.db.queries_log.append({
-                'sql': sql,
-                'time': "%.3f" % duration,
-            })
-
-            db_logger.debug(
-                '(%.3f) %s; args=%s', duration, self.sql, query_params,
-                extra={'duration': duration, 'sql': self.sql, 'params': query_params}
-            )
+        cur = self._adapter.do_query(
+                sql=self.sql, query_params=query_params,
+                using=using or self._using)
 
         return result_class(cur)
 
@@ -209,7 +159,7 @@ class TemplateQuery(object):
         except IndexError:
             raise ObjectDoesNotExist('Query returned no rows')
 
-        if len(result)>1:
+        if len(result) > 1:
             raise MultipleObjectsReturned('Query returned more than one row')
 
         return row[0]
@@ -226,10 +176,8 @@ class TemplateQuery(object):
         using = kwargs.pop('using', self._using)
 
         return type(self)(
-            template=template, context=context, using=using, **kwargs)
+            adapter=self._adapter, template=template,
+            context=context, using=using, **kwargs)
 
     def __unicode__(self):
-        return force_unicode(self.sql)
-
-    def __str__(self):
-        return force_str(unicode(self))
+        return self.sql

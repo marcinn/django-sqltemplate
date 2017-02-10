@@ -1,7 +1,7 @@
 import six
 
-from . import engines
-from .exceptions import TemplateDoesNotExist
+from .engines import engines
+from ...exceptions import TemplateDoesNotExist
 
 
 def _engine_list(using=None):
