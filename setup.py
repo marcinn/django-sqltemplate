@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='sqltemplate',
-      version='0.5.0-a1',
+      version='0.5.0',
       description='Database querying tool for Django, based on SQL templates',
       classifiers=[
         "Development Status :: 3 - Alpha",
