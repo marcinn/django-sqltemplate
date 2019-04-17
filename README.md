@@ -30,6 +30,16 @@ is a simple implementation of it.
 
 ```pip install django-sqltemplate```
 
+### Add application to the INSTALLED_APPS
+
+```
+    INSTALLED_APPS = [
+       ...
+       'djsqltemplate',
+       ...
+       ]
+```
+
 ### Add SQL template(s)
 
 Make `sqltemplates` directory in your Django app (your app must be added to
