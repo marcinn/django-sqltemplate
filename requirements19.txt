@@ -1,4 +1,0 @@
-Django==1.9
-sqltemplate==0.5.0
-ipython
-ipdb
