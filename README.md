@@ -316,7 +316,8 @@ with djsqltemplate.scope(context={'limit': 2}, using='default') as tpl:
 
 ## Requirements
 
-* Django 1.8+
+* Django 1.11+, Django 2.x, Django 3.x
+* Python 2.7 (deprecated), Python 3.5+
 
 Dependencies:
 
