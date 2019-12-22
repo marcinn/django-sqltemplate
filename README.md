@@ -312,7 +312,7 @@ with djsqltemplate.scope(context={'limit': 2}, using='default') as tpl:
 * There are many good template engines (Django Templates, Jinja2), so we just
   need to use them and not reinvent the wheel
 * Django 1.8+ has support for multiple templating engines
-* Django is a most popoular RAD framework for Python, but with limited ORM
+* Django is a most popoular RAD framework for Python, ~~but with limited ORM~~ (it's quite expressive nowdays, but still there are cases when plain SQL is better, ie. multiline and complex reporting queries)
 
 ## Requirements
 
