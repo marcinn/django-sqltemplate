@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import connections, connection
 from django.db.backends.utils import logger as db_logger
-from django.utils.encoding import force_str, force_unicode
+from django.utils.encoding import force_str
 
 import flatdict
 import types
@@ -228,8 +228,5 @@ class TemplateQuery(object):
         return type(self)(
             template=template, context=context, using=using, **kwargs)
 
-    def __unicode__(self):
-        return force_unicode(self.sql)
-
     def __str__(self):
-        return force_str(unicode(self))
+        return force_str(self.sql)
